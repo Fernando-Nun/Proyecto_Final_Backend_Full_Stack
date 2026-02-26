@@ -1,0 +1,61 @@
+const express = require('express');
+const { pool } = require('./src/db');
+const { sign, authMiddleware } = require('./src/auth')
+const { router: reclusosRouter } = require('./src/routes/reclusos.routes');
+const { router: usersRouter } = require('./src/routes/users.routes'); 
+
+
+const PORT = process.env.PORT || 3000
+const app = express()
+
+const allowed = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+];
+
+app.use(express.json());
+
+app.get('/', (req, res) => {
+    res.send('API de Reclusos OK');
+})
+
+app.use('/reclusos', reclusosRouter);
+app.use('/users', usersRouter);
+
+app.post('/login', (req, res) => {
+    const { email, password } = req.body;
+
+    if (email !== 'admin@test.com' || password !== '1234') {
+        return res.status(401).json({ error: 'Credenciales incorrectas' })
+    }
+
+    const token = sign({ email, role: 'admin' });
+
+    return res.json({ token });
+});
+
+app.listen(PORT, () => {
+    console.log(`Servidor activo en el puerto ${PORT}`);
+});
+
+app.get('/health', async (req, res) => {
+    try {
+        await pool.query('select 1');
+        return res.json({ ok: true });
+    } catch (err) {
+        return res.status(500).json({ ok: false })
+    }
+});
+
+app.get('/health/db', async (req, res) => {
+    try {
+        const r = await pool.query('select 1 as ok');
+        return res.json({ok:true, db:r.rows[0].ok})
+    } catch (err) {
+        console.log('DB Error', err.message)
+        return res.status(500).json({ok:false, error:'DB no disponible'})
+    }
+});
+
+const { errorHandler } = require('./src/middlewares/error.middleware');
+app.use(errorHandler);
