@@ -1,4 +1,6 @@
 const express = require('express');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const { pool } = require('./src/db');
 const { sign, authMiddleware } = require('./src/auth')
 const { router: reclusosRouter } = require('./src/routes/reclusos.routes');
@@ -11,7 +13,24 @@ const app = express()
 const allowed = [
     'http://localhost:3000',
     'http://localhost:3001',
+    'https://proyecto-final-frontend-full-stack.vercel.app'
 ];
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 100, // Limite de 100 peticiones por IP
+    message: 'Demasiadas peticiones, por favor intenta de nuevo más tarde.'
+});
+
+app.use(limiter);
+
+app.use(cors({
+    origin: function (origin, cb) {
+        if (!origin) return cb(null, true); // Postman
+        if (allowed.includes(origin)) return cb(null, true);
+        return cb(new Error('CORS bloqueado: ' + origin));
+    }
+}));
 
 app.use(express.json());
 
