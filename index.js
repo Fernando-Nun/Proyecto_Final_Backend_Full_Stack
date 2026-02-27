@@ -14,7 +14,6 @@ const allowed = [
     'http://localhost:3000',
     'http://localhost:3001',
     'https://proyecto-final-frontend-full-stack.vercel.app',
-    'https://4a4a2811-0179-4c76-a087-7091ccd9ef7c-00-1ma67i1naxocj.picard.replit.dev'
 ];
 
 const limiter = rateLimit({
